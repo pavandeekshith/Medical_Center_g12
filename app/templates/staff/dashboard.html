@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+
+{% block title %}Staff Dashboard - IITGN Medical Center{% endblock %}
+
+{% block additional_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h2>{{ session.get('username', 'Staff') }}</h2>
+            <p>{{ staff.Role if staff else 'Staff Member' }}</p>
+        </div>
+        <ul class="sidebar-menu">
+            <li><a href="{{ url_for('staff.dashboard') }}" class="active"><i class="fas fa-home"></i> Dashboard</a></li>
+            <li><a href="{{ url_for('staff.dispensary') }}"><i class="fas fa-pills"></i> Dispensary</a></li>
+            <li><a href="{{ url_for('staff.prescriptions') }}"><i class="fas fa-prescription"></i> Prescriptions</a></li>
+            <li><a href="{{ url_for('auth.logout') }}"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+        </ul>
+    </div>
+    
+    <div class="main-content">
+        <div class="dashboard-header">
+            <h1>Welcome, {{ session.get('username', 'Staff') }}</h1>
+            <p>{{ current_date }}</p>
+        </div>
+        
+        <div class="stats-container">
+            <div class="stat-card" data-stat="pending_prescriptions">
+                <h3>Pending Prescriptions</h3>
+                <p class="stat-value">{{ stats.pending_prescriptions }}</p>
+            </div>
+            <div class="stat-card" data-stat="low_stock_medications">
+                <h3>Low Stock Medications</h3>
+                <p class="stat-value">{{ stats.low_stock_medications }}</p>
+            </div>
+            <div class="stat-card" data-stat="medicines_dispensed_today">
+                <h3>Medicines Dispensed Today</h3>
+                <p class="stat-value">{{ stats.medicines_dispensed_today }}</p>
+            </div>
+            <div class="stat-card" data-stat="total_students_served">
+                <h3>Total Students Served</h3>
+                <p class="stat-value">{{ stats.total_students_served }}</p>
+            </div>
+        </div>
+        
+        <div class="recent-activity">
+            <h2>Recent Activity</h2>
+            <ul class="activity-list">
+                {% if activities %}
+                    {% for activity in activities %}
+                        <li class="activity-item">
+                            <div class="time">{{ activity.timestamp }}</div>
+                            <div class="description">{{ activity.description }}</div>
+                        </li>
+                    {% endfor %}
+                {% else %}
+                    <li class="activity-item">No recent activity</li>
+                {% endif %}
+            </ul>
+        </div>
+        
+        <div class="pending-prescriptions">
+            <h2>Pending Prescriptions</h2>
+            {% if pending_prescriptions %}
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Student</th>
+                            <th>Medication</th>
+                            <th>Quantity</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for prescription in pending_prescriptions %}
+                            <tr>
+                                <td>{{ prescription.PrescriptionDate }}</td>
+                                <td>{{ prescription.StudentFirstName }} {{ prescription.StudentLastName }}</td>
+                                <td>{{ prescription.MedicationName }} ({{ prescription.DosageForm }})</td>
+                                <td>{{ prescription.Quantity }}</td>
+                                <td>
+                                    <a href="{{ url_for('staff.dispense_medicine', prescription_id=prescription.PrescriptionID) }}" class="btn btn-primary btn-sm">Dispense</a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p>No pending prescriptions.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block additional_js %}
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}

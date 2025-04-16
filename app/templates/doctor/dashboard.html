@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+
+{% block title %}Doctor Dashboard - IITGN Medical Center{% endblock %}
+
+{% block additional_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h2>Dr. {{ session.get('username', 'Doctor') }}</h2>
+            <p>{{ doctor.Specialization if doctor else 'Doctor' }}</p>
+        </div>
+        <ul class="sidebar-menu">
+            <li><a href="{{ url_for('doctor.dashboard') }}" class="active"><i class="fas fa-home"></i> Dashboard</a></li>
+            <li><a href="{{ url_for('doctor.appointments') }}"><i class="fas fa-calendar-alt"></i> Appointments</a></li>
+            <li><a href="{{ url_for('doctor.availability') }}"><i class="fas fa-clock"></i> Availability</a></li>
+            <li><a href="{{ url_for('doctor.prescriptions') }}"><i class="fas fa-prescription"></i> Prescriptions</a></li>
+            <li><a href="{{ url_for('auth.logout') }}"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+        </ul>
+    </div>
+    
+    <div class="main-content">
+        <div class="dashboard-header">
+            <h1>Welcome, Dr. {{ session.get('username', 'Doctor') }}</h1>
+            <p>{{ current_date }}</p>
+        </div>
+        
+        <div class="stats-container">
+            <div class="stat-card" data-stat="appointments_today">
+                <h3>Today's Appointments</h3>
+                <p class="stat-value">{{ stats.appointments_today }}</p>
+            </div>
+            <div class="stat-card" data-stat="pending_appointments">
+                <h3>Pending Appointments</h3>
+                <p class="stat-value">{{ stats.pending_appointments }}</p>
+            </div>
+            <div class="stat-card" data-stat="prescriptions_issued">
+                <h3>Prescriptions Issued</h3>
+                <p class="stat-value">{{ stats.prescriptions_issued }}</p>
+            </div>
+            <div class="stat-card" data-stat="patients_seen">
+                <h3>Patients Seen</h3>
+                <p class="stat-value">{{ stats.patients_seen }}</p>
+            </div>
+        </div>
+        
+        <div class="recent-activity">
+            <h2>Recent Activity</h2>
+            <ul class="activity-list">
+                {% if activities %}
+                    {% for activity in activities %}
+                        <li class="activity-item">
+                            <div class="time">{{ activity.timestamp }}</div>
+                            <div class="description">{{ activity.description }}</div>
+                        </li>
+                    {% endfor %}
+                {% else %}
+                    <li class="activity-item">No recent activity</li>
+                {% endif %}
+            </ul>
+        </div>
+        
+        <div class="upcoming-appointments">
+            <h2>Upcoming Appointments</h2>
+            {% if upcoming_appointments %}
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Time</th>
+                            <th>Student</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for appointment in upcoming_appointments %}
+                            <tr>
+                                <td>{{ appointment.AppointmentTime }}</td>
+                                <td>{{ appointment.StudentFirstName }} {{ appointment.StudentLastName }}</td>
+                                <td>{{ appointment.Status }}</td>
+                                <td>
+                                    <a href="{{ url_for('doctor.view_appointment', appointment_id=appointment.AppointmentID) }}" class="btn btn-primary btn-sm">View</a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p>No upcoming appointments.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block additional_js %}
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}

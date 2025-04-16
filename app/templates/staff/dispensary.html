@@ -1,0 +1,349 @@
+{% extends "base.html" %}
+
+{% block title %}Dispensary - IITGN Medical Center{% endblock %}
+
+{% block additional_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h2>{{ session.get('username', 'Staff') }}</h2>
+            <p>{{ staff.Role if staff else 'Staff Member' }}</p>
+        </div>
+        <ul class="sidebar-menu">
+            <li><a href="{{ url_for('staff.dashboard') }}"><i class="fas fa-home"></i> Dashboard</a></li>
+            <li><a href="{{ url_for('staff.dispensary') }}" class="active"><i class="fas fa-pills"></i> Dispensary</a></li>
+            <li><a href="{{ url_for('staff.prescriptions') }}"><i class="fas fa-prescription"></i> Prescriptions</a></li>
+            <li><a href="{{ url_for('auth.logout') }}"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+        </ul>
+    </div>
+    
+    <div class="main-content">
+        <div class="dashboard-header">
+            <h1>Dispensary Management</h1>
+            <p>Manage medications and inventory</p>
+        </div>
+        
+        <div class="card">
+            <div class="card-header">
+                <h2>Add New Medication</h2>
+            </div>
+            <div class="card-body">
+                <form id="medication-form" method="POST" action="{{ url_for('staff.add_medication') }}">
+                    <div class="form-group">
+                        <label for="name">Medication Name</label>
+                        <input type="text" id="name" name="name" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="dosage-form">Dosage Form</label>
+                        <select id="dosage-form" name="dosage_form" class="form-control" required>
+                            <option value="">Select Dosage Form</option>
+                            <option value="Tablet">Tablet</option>
+                            <option value="Capsule">Capsule</option>
+                            <option value="Syrup">Syrup</option>
+                            <option value="Injection">Injection</option>
+                            <option value="Cream">Cream</option>
+                            <option value="Ointment">Ointment</option>
+                            <option value="Drops">Drops</option>
+                            <option value="Inhaler">Inhaler</option>
+                            <option value="Powder">Powder</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="quantity">Quantity in Stock</label>
+                        <input type="number" id="quantity" name="quantity" class="form-control" min="0" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="expiry-date">Expiry Date (Optional)</label>
+                        <input type="date" id="expiry-date" name="expiry_date" class="form-control">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Add Medication</button>
+                </form>
+            </div>
+        </div>
+        
+        <div class="card mt-3">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h2>Medication Inventory</h2>
+                    <div class="search-container">
+                        <input type="text" id="medication-search" class="form-control" placeholder="Search medications...">
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <ul class="nav nav-tabs" id="inventory-tabs" role="tablist">
+                    <li class="nav-item">
+                        <a class="nav-link active" id="all-tab" data-toggle="tab" href="#all" role="tab">All Medications</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" id="low-stock-tab" data-toggle="tab" href="#low-stock" role="tab">Low Stock</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" id="expired-tab" data-toggle="tab" href="#expired" role="tab">Expired</a>
+                    </li>
+                </ul>
+                
+                <div class="tab-content" id="inventory-tab-content">
+                    <div class="tab-pane fade show active" id="all" role="tabpanel">
+                        {% if medications %}
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Dosage Form</th>
+                                        <th>Quantity in Stock</th>
+                                        <th>Expiry Date</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for medication in medications %}
+                                        <tr class="{% if medication.QuantityInStock <= 10 %}table-warning{% endif %} {% if medication.ExpiryDate and medication.ExpiryDate <= current_date %}table-danger{% endif %}">
+                                            <td>{{ medication.Name }}</td>
+                                            <td>{{ medication.DosageForm }}</td>
+                                            <td>{{ medication.QuantityInStock }}</td>
+                                            <td>{{ medication.ExpiryDate or 'N/A' }}</td>
+                                            <td>
+                                                <a href="{{ url_for('staff.edit_medication', medication_id=medication.MedicationID) }}" class="btn btn-warning btn-sm">Edit</a>
+                                                <button class="btn btn-success btn-sm update-stock-btn" data-medication-id="{{ medication.MedicationID }}" data-medication-name="{{ medication.Name }}">Update Stock</button>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        {% else %}
+                            <p>No medications found.</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="tab-pane fade" id="low-stock" role="tabpanel">
+                        {% if low_stock_medications %}
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Dosage Form</th>
+                                        <th>Quantity in Stock</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for medication in low_stock_medications %}
+                                        <tr>
+                                            <td>{{ medication.Name }}</td>
+                                            <td>{{ medication.DosageForm }}</td>
+                                            <td>{{ medication.QuantityInStock }}</td>
+                                            <td>
+                                                <button class="btn btn-success btn-sm update-stock-btn" data-medication-id="{{ medication.MedicationID }}" data-medication-name="{{ medication.Name }}">Update Stock</button>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        {% else %}
+                            <p>No medications with low stock.</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="tab-pane fade" id="expired" role="tabpanel">
+                        {% if expired_medications %}
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Dosage Form</th>
+                                        <th>Quantity in Stock</th>
+                                        <th>Expiry Date</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for medication in expired_medications %}
+                                        <tr>
+                                            <td>{{ medication.Name }}</td>
+                                            <td>{{ medication.DosageForm }}</td>
+                                            <td>{{ medication.QuantityInStock }}</td>
+                                            <td>{{ medication.ExpiryDate }}</td>
+                                            <td>
+                                                <button class="btn btn-danger btn-sm remove-stock-btn" data-medication-id="{{ medication.MedicationID }}" data-medication-name="{{ medication.Name }}">Remove Stock</button>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        {% else %}
+                            <p>No expired medications.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Update Stock Modal -->
+<div id="update-stock-modal" class="modal">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <h2>Update Stock</h2>
+        <form id="update-stock-form" method="POST" action="{{ url_for('staff.update_medication_stock') }}">
+            <input type="hidden" id="medication-id" name="medication_id">
+            <div class="form-group">
+                <label for="medication-name">Medication</label>
+                <input type="text" id="medication-name" class="form-control" readonly>
+            </div>
+            <div class="form-group">
+                <label for="stock-change">Quantity to Add/Remove</label>
+                <input type="number" id="stock-change" name="stock_change" class="form-control" required>
+                <small class="form-text text-muted">Use positive numbers to add stock, negative to remove.</small>
+            </div>
+            <button type="submit" class="btn btn-primary">Update Stock</button>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block additional_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Setup update stock modal
+        const updateStockBtns = document.querySelectorAll('.update-stock-btn');
+        const removeStockBtns = document.querySelectorAll('.remove-stock-btn');
+        const updateStockModal = document.getElementById('update-stock-modal');
+        const updateStockForm = document.getElementById('update-stock-form');
+        const closeBtn = updateStockModal.querySelector('.close');
+        
+        // Setup search functionality
+        const searchInput = document.getElementById('medication-search');
+        
+        if (searchInput) {
+            searchInput.addEventListener('input', function() {
+                const searchTerm = this.value.toLowerCase();
+                const tableRows = document.querySelectorAll('tbody tr');
+                
+                tableRows.forEach(row => {
+                    const medicationName = row.querySelector('td:first-child').textContent.toLowerCase();
+                    const dosageForm = row.querySelector('td:nth-child(2)').textContent.toLowerCase();
+                    
+                    if (medicationName.includes(searchTerm) || dosageForm.includes(searchTerm)) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+            });
+        }
+        
+        // Setup tab functionality
+        const tabLinks = document.querySelectorAll('.nav-link');
+        const tabContents = document.querySelectorAll('.tab-pane');
+        
+        tabLinks.forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                // Remove active class from all tabs
+                tabLinks.forEach(tab => tab.classList.remove('active'));
+                tabContents.forEach(content => content.classList.remove('show', 'active'));
+                
+                // Add active class to clicked tab
+                this.classList.add('active');
+                
+                // Show corresponding content
+                const targetId = this.getAttribute('href').substring(1);
+                document.getElementById(targetId).classList.add('show', 'active');
+            });
+        });
+        
+        // Setup update stock buttons
+        updateStockBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                const medicationId = this.dataset.medicationId;
+                const medicationName = this.dataset.medicationName;
+                
+                document.getElementById('medication-id').value = medicationId;
+                document.getElementById('medication-name').value = medicationName;
+                document.getElementById('stock-change').value = '';
+                
+                updateStockModal.style.display = 'block';
+            });
+        });
+        
+        // Setup remove stock buttons
+        removeStockBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                const medicationId = this.dataset.medicationId;
+                const medicationName = this.dataset.medicationName;
+                
+                if (confirm(`Are you sure you want to remove all stock of ${medicationName}?`)) {
+                    // Create a form and submit it
+                    const form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = '{{ url_for("staff.update_medication_stock") }}';
+                    
+                    const medicationIdInput = document.createElement('input');
+                    medicationIdInput.type = 'hidden';
+                    medicationIdInput.name = 'medication_id';
+                    medicationIdInput.value = medicationId;
+                    
+                    const stockChangeInput = document.createElement('input');
+                    stockChangeInput.type = 'hidden';
+                    stockChangeInput.name = 'stock_change';
+                    stockChangeInput.value = '-999999'; // Large negative number to remove all stock
+                    
+                    form.appendChild(medicationIdInput);
+                    form.appendChild(stockChangeInput);
+                    
+                    document.body.appendChild(form);
+                    form.submit();
+                }
+            });
+        });
+        
+        // Close modal when clicking the close button
+        closeBtn.onclick = function() {
+            updateStockModal.style.display = 'none';
+        };
+        
+        // Close modal when clicking outside the modal content
+        window.onclick = function(event) {
+            if (event.target === updateStockModal) {
+                updateStockModal.style.display = 'none';
+            }
+        };
+        
+        // Handle update stock form submission
+        updateStockForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            
+            fetch(this.action, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Stock updated successfully!');
+                    updateStockModal.style.display = 'none';
+                    
+                    // Reload the page to show updated stock
+                    window.location.reload();
+                } else {
+                    alert(data.message || 'Failed to update stock.');
+                }
+            })
+            .catch(error => {
+                console.error('Error updating stock:', error);
+                alert('Error updating stock. Please try again.');
+            });
+        });
+    });
+</script>
+{% endblock %}

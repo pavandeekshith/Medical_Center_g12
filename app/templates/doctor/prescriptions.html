@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+
+{% block title %}Prescriptions - IITGN Medical Center{% endblock %}
+
+{% block additional_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h2>Dr. {{ session.get('username', 'Doctor') }}</h2>
+            <p>{{ doctor.Specialization if doctor else 'Doctor' }}</p>
+        </div>
+        <ul class="sidebar-menu">
+            <li><a href="{{ url_for('doctor.dashboard') }}"><i class="fas fa-home"></i> Dashboard</a></li>
+            <li><a href="{{ url_for('doctor.appointments') }}"><i class="fas fa-calendar-alt"></i> Appointments</a></li>
+            <li><a href="{{ url_for('doctor.availability') }}"><i class="fas fa-clock"></i> Availability</a></li>
+            <li><a href="{{ url_for('doctor.prescriptions') }}" class="active"><i class="fas fa-prescription"></i> Prescriptions</a></li>
+            <li><a href="{{ url_for('auth.logout') }}"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+        </ul>
+    </div>
+    
+    <div class="main-content">
+        <div class="dashboard-header">
+            <h1>Prescriptions</h1>
+            <p>Manage patient prescriptions</p>
+        </div>
+        
+        <div class="card">
+            <div class="card-header">
+                <h2>Add New Prescription</h2>
+            </div>
+            <div class="card-body">
+                <form id="prescription-form" method="POST" action="{{ url_for('doctor.add_prescription') }}">
+                    <div class="form-group">
+                        <label for="student">Student</label>
+                        <select id="student" name="student_id" class="form-control" required>
+                            <option value="">Select Student</option>
+                            {% for student in students %}
+                                <option value="{{ student.StudentID }}">{{ student.FirstName }} {{ student.LastName }} ({{ student.StudentID }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="appointment">Appointment (Optional)</label>
+                        <select id="appointment" name="appointment_id" class="form-control">
+                            <option value="">Select Appointment</option>
+                            {% for appointment in appointments %}
+                                <option value="{{ appointment.AppointmentID }}">{{ appointment.AppointmentDate }} {{ appointment.AppointmentTime }} - {{ appointment.StudentFirstName }} {{ appointment.StudentLastName }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="medication">Medication</label>
+                        <select id="medication" name="medication_id" class="form-control" required>
+                            <option value="">Select Medication</option>
+                            {% for medication in medications %}
+                                <option value="{{ medication.MedicationID }}" {% if medication.QuantityInStock <= 0 %}disabled{% endif %}>
+                                    {{ medication.Name }} ({{ medication.DosageForm }}) - Stock: {{ medication.QuantityInStock }}
+                                    {% if medication.QuantityInStock <= 0 %}(Out of Stock){% endif %}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="quantity">Quantity</label>
+                        <input type="number" id="quantity" name="quantity" class="form-control" min="1" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="instructions">Instructions</label>
+                        <textarea id="instructions" name="instructions" class="form-control" rows="3" required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Add Prescription</button>
+                </form>
+            </div>
+        </div>
+        
+        <div class="card mt-3">
+            <div class="card-header">
+                <h2>Recent Prescriptions</h2>
+            </div>
+            <div class="card-body">
+                {% if prescriptions %}
+                    <table id="prescriptions-table" class="table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Student</th>
+                                <th>Medication</th>
+                                <th>Quantity</th>
+                                <th>Instructions</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for prescription in prescriptions %}
+                                <tr>
+                                    <td>{{ prescription.PrescriptionDate }}</td>
+                                    <td>{{ prescription.StudentFirstName }} {{ prescription.StudentLastName }}</td>
+                                    <td>{{ prescription.MedicationName }} ({{ prescription.DosageForm }})</td>
+                                    <td>{{ prescription.Quantity }}</td>
+                                    <td>{{ prescription.Instructions }}</td>
+                                    <td>
+                                        {% if prescription.DateGiven %}
+                                            Dispensed on {{ prescription.DateGiven }}
+                                        {% else %}
+                                            Pending
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                {% else %}
+                    <p>No prescriptions found.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block additional_js %}
+<script src="{{ url_for('static', filename='js/prescriptions.js') }}"></script>
+{% endblock %}

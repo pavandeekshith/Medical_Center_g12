@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+
+{% block title %}Book Appointment{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">Book Appointment with Dr. {{ doctor.Name }}</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-md-4">
+                            {% if doctor.Image %}
+                                <img src="data:image/jpeg;base64,{{ doctor.Image|b64encode }}" class="img-fluid rounded" alt="Doctor Image">
+                            {% else %}
+                                <img src="{{ url_for('static', filename='images/default_doctor.png') }}" class="img-fluid rounded" alt="Default Doctor Image">
+                            {% endif %}
+                        </div>
+                        <div class="col-md-8">
+                            <h4>{{ doctor.Name }}</h4>
+                            <p><strong>Specialization:</strong> {{ doctor.Specialization }}</p>
+                            <p><strong>Email:</strong> {{ doctor.Email }}</p>
+                            <p><strong>Contact:</strong> {{ doctor.ContactNumber }}</p>
+                        </div>
+                    </div>
+
+                    <form method="POST" action="{{ url_for('student.book_appointment_for_doctor', doctor_id=doctor.DoctorID) }}">
+                        <div class="mb-3">
+                            <label for="appointment_date" class="form-label">Select Date</label>
+                            <input type="date" class="form-control" id="appointment_date" name="appointment_date" required min="{{ today }}">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="problem_description" class="form-label">Problem Description</label>
+                            <textarea class="form-control" id="problem_description" name="problem_description" rows="3" required placeholder="Please describe your medical issue"></textarea>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label">Available Time Slots</label>
+                            <div class="time-slots-container">
+                                {% if availability %}
+                                    <div class="row">
+                                        {% for slot in availability %}
+                                            <div class="col-md-3 mb-2">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="radio" name="time_slot" id="slot_{{ loop.index }}" value="{{ slot.StartTime }}" {% if slot.Status == 'Booked' %}disabled{% endif %} required>
+                                                    <label class="form-check-label {% if slot.Status == 'Booked' %}text-muted{% elif slot.Status == 'Available' %}text-success{% else %}text-danger{% endif %}" for="slot_{{ loop.index }}">
+                                                        {{ slot.StartTime }}
+                                                        {% if slot.Status == 'Booked' %}
+                                                            <span class="badge bg-warning">Booked</span>
+                                                        {% elif slot.Status == 'Unavailable' %}
+                                                            <span class="badge bg-danger">Unavailable</span>
+                                                        {% else %}
+                                                            <span class="badge bg-success">Available</span>
+                                                        {% endif %}
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                {% else %}
+                                    <div class="alert alert-info">
+                                        No availability found for the selected date. Please select a different date or contact the medical center.
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">Book Appointment</button>
+                            <a href="{{ url_for('student.doctors') }}" class="btn btn-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // JavaScript to handle date change and fetch available slots
+    document.getElementById('appointment_date').addEventListener('change', function() {
+        const selectedDate = this.value;
+        const doctorId = {{ doctor.DoctorID }};
+        const container = document.querySelector('.time-slots-container');
+        
+        // Show loading indicator
+        container.innerHTML = '<div class="text-center"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div></div>';
+        
+        // Fetch available slots for the selected date
+        fetch(`/student/get_available_slots/${doctorId}/${selectedDate}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log("Received data:", data); // Debug: log the data
+                
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+                
+                if (data.slots && data.slots.length > 0) {
+                    let html = '<div class="row">';
+                    
+                    data.slots.forEach((slot, index) => {
+                        const disabled = slot.Status === 'Booked' || slot.Status === 'Unavailable' ? 'disabled' : '';
+                        const labelClass = slot.Status === 'Booked' ? 'text-muted' : 
+                                          (slot.Status === 'Available' ? 'text-success' : 'text-danger');
+                        
+                        let badgeHtml = '';
+                        if (slot.Status === 'Booked') {
+                            badgeHtml = '<span class="badge bg-warning">Booked</span>';
+                        } else if (slot.Status === 'Unavailable') {
+                            badgeHtml = '<span class="badge bg-danger">Unavailable</span>';
+                        } else {
+                            badgeHtml = '<span class="badge bg-success">Available</span>';
+                        }
+                        
+                        html += `
+                            <div class="col-md-3 mb-2">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="time_slot" 
+                                           id="slot_${index}" value="${slot.StartTime || slot.time}" ${disabled} required>
+                                    <label class="form-check-label ${labelClass}" for="slot_${index}">
+                                        ${slot.StartTime || slot.time}
+                                        ${badgeHtml}
+                                    </label>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    
+                    html += '</div>';
+                    container.innerHTML = html;
+                } else {
+                    container.innerHTML = `
+                        <div class="alert alert-info">
+                            No availability found for the selected date. Please select a different date or contact the medical center.
+                        </div>
+                    `;
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching available slots:', error);
+                container.innerHTML = `
+                    <div class="alert alert-danger">
+                        Error loading available slots. Please try again later.
+                    </div>
+                `;
+            });
+    });
+</script>
+
+{% endblock %}

@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block title %}Login - IITGN Medical Center{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="card" style="max-width: 500px; margin: 50px auto;">
+        <div class="card-header">
+            <h2>Login to Medical Center</h2>
+        </div>
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('auth.login') }}">
+                <div class="form-group">
+                    <label for="username">Username / Roll Number</label>
+                    <input type="text" id="username" name="username" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <button type="submit" class="btn btn-primary">Login</button>
+                </div>
+            </form>
+        </div>
+        <div class="card-footer">
+            <p>For any issues with login, please contact the medical center administration.</p>
+        </div>
+    </div>
+</div>
+{% endblock %}

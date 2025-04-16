@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block title %}Doctors - IITGN Medical Center{% endblock %}
+
+{% block additional_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h2>{{ session.get('username', 'Student') }}</h2>
+            <p>Student</p>
+        </div>
+        <ul class="sidebar-menu">
+            <li><a href="{{ url_for('student.dashboard') }}"><i class="fas fa-home"></i> Dashboard</a></li>
+            <li><a href="{{ url_for('student.doctors') }}" class="active"><i class="fas fa-user-md"></i> Doctors</a></li>
+            <li><a href="{{ url_for('student.appointments') }}"><i class="fas fa-calendar-alt"></i> Appointments</a></li>
+            <li><a href="{{ url_for('student.prescriptions') }}"><i class="fas fa-prescription"></i> Prescriptions</a></li>
+            <li><a href="{{ url_for('auth.logout') }}"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+        </ul>
+    </div>
+    
+    <div class="main-content">
+        <div class="dashboard-header">
+            <h1>Doctors</h1>
+            <p>View doctor information and availability</p>
+        </div>
+        
+        <div class="row">
+            {% for doctor in doctors %}
+                <div class="col-md-4 mb-4">
+                    <div class="card doctor-card">
+                        <div class="card-header">
+                            <h2>{{ doctor.Name }}</h2>
+                        </div>
+                        <div class="card-body">
+                            {% if doctor.Image %}
+                                <img src="data:image/jpeg;base64,{{ doctor.Image|b64encode }}" alt="{{ doctor.Name }}" class="doctor-image">
+                            {% else %}
+                                <div class="doctor-image-placeholder">
+                                    <i class="fas fa-user-md fa-5x"></i>
+                                </div>
+                            {% endif %}
+                            
+                            <div class="doctor-info">
+                                <p><strong>Specialization:</strong> {{ doctor.Specialization }}</p>
+                                <p><strong>Email:</strong> {{ doctor.Email }}</p>
+                                <p><strong>Contact:</strong> {{ doctor.ContactNumber }}</p>
+                            </div>
+                            
+                            <div class="doctor-availability">
+                                <h3>Availability</h3>
+                                {% if doctor.availability %}
+                                    <ul class="availability-list">
+                                        {% for avail in doctor.availability %}
+                                            <div class="availability-slot">
+                                                <span class="day">{{ avail.DayOfWeek }}</span>
+                                                <span class="time">{{ avail.StartTime }} - {{ avail.EndTime }}</span>
+                                                {% if avail.Status %}
+                                                    <span class="status {{ avail.Status|lower }}">{{ avail.Status }}</span>
+                                                {% else %}
+                                                    <span class="status available">Available</span>
+                                                {% endif %}
+                                            </div>
+                                        {% endfor %}
+                                    </ul>
+                                {% else %}
+                                    <p>No availability information.</p>
+                                {% endif %}
+                            </div>
+                            
+                            <a href="{{ url_for('student.book_appointment_for_doctor', doctor_id=doctor.DoctorID) }}" class="btn btn-primary mt-3">Book Appointment</a>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+
+{% block title %}Prescriptions - IITGN Medical Center{% endblock %}
+
+{% block additional_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h2>{{ session.get('username', 'Staff') }}</h2>
+            <p>{{ staff.Role if staff else 'Staff Member' }}</p>
+        </div>
+        <ul class="sidebar-menu">
+            <li><a href="{{ url_for('staff.dashboard') }}"><i class="fas fa-home"></i> Dashboard</a></li>
+            <li><a href="{{ url_for('staff.dispensary') }}"><i class="fas fa-pills"></i> Dispensary</a></li>
+            <li><a href="{{ url_for('staff.prescriptions') }}" class="active"><i class="fas fa-prescription"></i> Prescriptions</a></li>
+            <li><a href="{{ url_for('auth.logout') }}"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+        </ul>
+    </div>
+    
+    <div class="main-content">
+        <div class="dashboard-header">
+            <h1>Prescriptions Management</h1>
+            <p>Dispense medications to students</p>
+        </div>
+        
+        <div class="card">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h2>Pending Prescriptions</h2>
+                    <div class="search-container">
+                        <input type="text" id="prescription-search" class="form-control" placeholder="Search by student name or ID...">
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                {% if pending_prescriptions %}
+                    <table id="prescriptions-table" class="table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Student</th>
+                                <th>Medication</th>
+                                <th>Quantity</th>
+                                <th>Doctor</th>
+                                <th>Instructions</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for prescription in pending_prescriptions %}
+                                <tr>
+                                    <td>{{ prescription.PrescriptionDate }}</td>
+                                    <td>{{ prescription.StudentFirstName }} {{ prescription.StudentLastName }}</td>
+                                    <td>{{ prescription.MedicationName }} ({{ prescription.DosageForm }})</td>
+                                    <td>{{ prescription.Quantity }}</td>
+                                    <td>{{ prescription.DoctorName }}</td>
+                                    <td>{{ prescription.Instructions }}</td>
+                                    <td>
+                                        <button class="btn btn-primary btn-sm dispense-btn" 
+                                                data-prescription-id="{{ prescription.PrescriptionID }}" 
+                                                data-medication-id="{{ prescription.MedicationID }}">
+                                            Dispense
+                                        </button>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                {% else %}
+                    <p>No pending prescriptions.</p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="card mt-3">
+            <div class="card-header">
+                <h2>Dispensed Medications</h2>
+            </div>
+            <div class="card-body">
+                {% if dispensed_medications %}
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Date Given</th>
+                                <th>Student</th>
+                                <th>Medication</th>
+                                <th>Quantity Given</th>
+                                <th>Prescribed By</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for medication in dispensed_medications %}
+                                <tr>
+                                    <td>{{ medication.DateGiven }}</td>
+                                    <td>{{ medication.StudentFirstName }} {{ medication.StudentLastName }}</td>
+                                    <td>{{ medication.MedicationName }}</td>
+                                    <td>{{ medication.QuantityGiven }}</td>
+                                    <td>{{ medication.DoctorName }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                {% else %}
+                    <p>No medications have been dispensed yet.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Dispense Modal -->
+<div id="dispense-modal" class="modal">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <div class="modal-header">
+            <h2>Dispense Medication</h2>
+        </div>
+        <div class="modal-body">
+            <!-- Content will be dynamically populated -->
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block additional_js %}
+<script src="{{ url_for('static', filename='js/prescriptions.js') }}"></script>
+{% endblock %}

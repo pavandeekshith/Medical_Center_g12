@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}IITGN Medical Center{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    {% block additional_css %}{% endblock %}
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+</head>
+<body data-user-role="{{ session.get('role', '') }}">
+    <header>
+        <div class="header-container">
+            <div class="logo">
+                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="IITGN Medical Center Logo">
+                <h1>IITGN Medical Center</h1>
+            </div>
+            <nav>
+                <ul>
+                    {% if session.get('user_id') %}
+                        {% if session.get('role') == 'student' %}
+                            <li><a href="{{ url_for('student.dashboard') }}">Dashboard</a></li>
+                            <li><a href="{{ url_for('student.doctors') }}">Doctors</a></li>
+                            <li><a href="{{ url_for('student.appointments') }}">Appointments</a></li>
+                            <li><a href="{{ url_for('student.prescriptions') }}">Prescriptions</a></li>
+                        {% elif session.get('role') == 'doctor' %}
+                            <li><a href="{{ url_for('doctor.dashboard') }}">Dashboard</a></li>
+                            <li><a href="{{ url_for('doctor.appointments') }}">Appointments</a></li>
+                            <li><a href="{{ url_for('doctor.availability') }}">Availability</a></li>
+                            <li><a href="{{ url_for('doctor.prescriptions') }}">Prescriptions</a></li>
+                        {% elif session.get('role') == 'staff' %}
+                            <li><a href="{{ url_for('staff.dashboard') }}">Dashboard</a></li>
+                            <li><a href="{{ url_for('staff.dispensary') }}">Dispensary</a></li>
+                            <li><a href="{{ url_for('staff.prescriptions') }}">Prescriptions</a></li>
+                        {% endif %}
+                        <li><a href="{{ url_for('auth.logout') }}">Logout</a></li>
+                    {% else %}
+                        <li><a href="{{ url_for('auth.login') }}">Login</a></li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+    </header>
+    
+    <main>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-messages">
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+        
+        {% block content %}{% endblock %}
+    </main>
+    
+    <footer>
+        <div class="container">
+            <p>&copy; {{ now.year }} IITGN Medical Center. All rights reserved.</p>
+            <p>For emergencies, call: <strong>+91-79-2395-2000</strong></p>
+        </div>
+    </footer>
+    
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    {% block additional_js %}{% endblock %}
+</body>
+</html>

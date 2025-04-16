@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+
+{% block title %}Prescriptions - IITGN Medical Center{% endblock %}
+
+{% block additional_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h2>{{ session.get('username', 'Student') }}</h2>
+            <p>Student</p>
+        </div>
+        <ul class="sidebar-menu">
+            <li><a href="{{ url_for('student.dashboard') }}"><i class="fas fa-home"></i> Dashboard</a></li>
+            <li><a href="{{ url_for('student.doctors') }}"><i class="fas fa-user-md"></i> Doctors</a></li>
+            <li><a href="{{ url_for('student.appointments') }}"><i class="fas fa-calendar-alt"></i> Appointments</a></li>
+            <li><a href="{{ url_for('student.prescriptions') }}" class="active"><i class="fas fa-prescription"></i> Prescriptions</a></li>
+            <li><a href="{{ url_for('auth.logout') }}"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+        </ul>
+    </div>
+    
+    <div class="main-content">
+        <div class="dashboard-header">
+            <h1>My Prescriptions</h1>
+            <p>View your prescription history</p>
+        </div>
+        
+        <div class="card">
+            <div class="card-header">
+                <h2>Current Prescriptions</h2>
+            </div>
+            <div class="card-body">
+                {% if current_prescriptions %}
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Doctor</th>
+                                <th>Medication</th>
+                                <th>Quantity</th>
+                                <th>Instructions</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for prescription in current_prescriptions %}
+                                <tr>
+                                    <td>{{ prescription.PrescriptionDate }}</td>
+                                    <td>{{ prescription.DoctorName }}</td>
+                                    <td>{{ prescription.MedicationName }} ({{ prescription.DosageForm }})</td>
+                                    <td>{{ prescription.Quantity }}</td>
+                                    <td>{{ prescription.Instructions }}</td>
+                                    <td>
+                                        {% if prescription.DateGiven %}
+                                            <span class="badge badge-success">Dispensed on {{ prescription.DateGiven }}</span>
+                                        {% else %}
+                                            <span class="badge badge-warning">Pending</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                {% else %}
+                    <p>No current prescriptions.</p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="card mt-3">
+            <div class="card-header">
+                <h2>Prescription History</h2>
+            </div>
+            <div class="card-body">
+                {% if prescription_history %}
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Doctor</th>
+                                <th>Medication</th>
+                                <th>Quantity</th>
+                                <th>Instructions</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for prescription in prescription_history %}
+                                <tr>
+                                    <td>{{ prescription.PrescriptionDate }}</td>
+                                    <td>{{ prescription.DoctorName }}</td>
+                                    <td>{{ prescription.MedicationName }} ({{ prescription.DosageForm }})</td>
+                                    <td>{{ prescription.Quantity }}</td>
+                                    <td>{{ prescription.Instructions }}</td>
+                                    <td>
+                                        {% if prescription.DateGiven %}
+                                            <span class="badge badge-success">Dispensed on {{ prescription.DateGiven }}</span>
+                                        {% else %}
+                                            <span class="badge badge-warning">Pending</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                {% else %}
+                    <p>No prescription history.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

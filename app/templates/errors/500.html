@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block title %}Internal Server Error - IITGN Medical Center{% endblock %}
+
+{% block content %}
+<div class="container text-center mt-5">
+    <div class="card">
+        <div class="card-body">
+            <h1 class="display-1">500</h1>
+            <h2>Internal Server Error</h2>
+            <p>Something went wrong on our end. Please try again later.</p>
+            <p><a href="{{ url_for('main.index') }}" class="btn btn-primary">Return to Home</a></p>
+        </div>
+    </div>
+</div>
+{% endblock %}
